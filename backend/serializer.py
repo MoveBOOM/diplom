@@ -14,6 +14,7 @@ from rest_framework import serializers
 from backend.models import Product, ProductInfo, ProductParameter, Shop
 
 
+# Сериализатор для параметров продукта
 class ParameterSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=128, source='parameter.name')
     value = serializers.CharField(max_length=128)
@@ -23,6 +24,7 @@ class ParameterSerializer(serializers.ModelSerializer):
         fields = ['name', 'value']
 
 
+# Сериализатор для информации о продукте
 class ProductSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=128, source='product.name')
     description = serializers.CharField(source='name')
@@ -34,6 +36,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['name', 'description', 'shop', 'parameters', 'price', 'quantity']
 
 
+# Сериализатор для адреса
 class AddressSerializer(serializers.Serializer):
     city = serializers.CharField(max_length=128, required=False)
     street = serializers.CharField(max_length=128, required=False)
@@ -43,6 +46,7 @@ class AddressSerializer(serializers.Serializer):
     corps = serializers.CharField(max_length=128, required=False)
 
 
+# Сериализатор для контактной информации
 class ContactSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=128)
     first_name = serializers.CharField(max_length=128)
@@ -52,9 +56,10 @@ class ContactSerializer(serializers.Serializer):
     address = AddressSerializer()
 
 
+# Сериализатор для элемента завершенного заказа
 class OrderDoneItemSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='product.product.name', read_only=True)
-    price = serializers.SerializerMethodField()
+    price = serializers.SerializerMethodField() #
 
     def get_price(self, obj):
         return obj.product.price * obj.quantity
@@ -64,6 +69,7 @@ class OrderDoneItemSerializer(serializers.ModelSerializer):
         fields = ['name', 'quantity', 'price']
 
 
+# Сериализатор для элемента заказа
 class OrderItemSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=128)
     price = serializers.FloatField()
@@ -73,6 +79,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['name', 'price', 'quantity']
 
 
+# Сериализатор для завершенного заказа
 class OrderDoneSerializer(serializers.ModelSerializer):
     items = OrderDoneItemSerializer(many=True)
 

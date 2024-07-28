@@ -3,8 +3,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
-
+# Менеджер для кастомной модели пользователя
 class CustomUserManager(BaseUserManager):
+    # Метод для создания обычного пользователя
     def create_user(self, email, first_name, last_name, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
@@ -13,14 +14,14 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
-
+    # Метод для создания суперпользователя
     def create_superuser(self, email, first_name, last_name, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(email, first_name, last_name, password, **extra_fields)
 
-
+# Кастомная модель пользователя
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, verbose_name="Электронная почта")
     first_name = models.CharField(max_length=30, verbose_name="Имя")
@@ -40,7 +41,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
 
-
+# Модель магазина
 class Shop(models.Model):
     name = models.CharField(max_length=128, verbose_name="Название")
     url = models.URLField(verbose_name="URL")
@@ -52,7 +53,7 @@ class Shop(models.Model):
         verbose_name = "Магазин"
         verbose_name_plural = "Магазины"
 
-
+# Модель категории
 class Category(models.Model):
     shops = models.ManyToManyField(Shop, related_name='categories', verbose_name="Магазины")
     name = models.CharField(max_length=128, verbose_name="Название")
@@ -64,7 +65,7 @@ class Category(models.Model):
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
 
-
+# Модель продукта
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', verbose_name="Категория")
     name = models.CharField(max_length=128, verbose_name="Название")
@@ -77,6 +78,7 @@ class Product(models.Model):
         verbose_name_plural = "Продукты"
 
 
+# Модель информации о продукте
 class ProductInfo(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='info', verbose_name="Продукт")
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='info', verbose_name="Магазин")
@@ -93,6 +95,7 @@ class ProductInfo(models.Model):
         verbose_name_plural = "Информация о продуктах"
 
 
+# Модель параметра
 class Parameter(models.Model):
     name = models.CharField(max_length=128, verbose_name="Название")
 
@@ -103,7 +106,7 @@ class Parameter(models.Model):
         verbose_name = "Параметр"
         verbose_name_plural = "Параметры"
 
-
+# Модель параметров продукта
 class ProductParameter(models.Model):
     product_info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE, related_name='parameters',
                                      verbose_name="Информация о продукте")
@@ -118,6 +121,7 @@ class ProductParameter(models.Model):
         verbose_name_plural = "Параметры продуктов"
 
 
+# Модель заказа
 class Order(models.Model):
     STATUS_CHOICES = [
         ('CREATED', 'Создан'),
@@ -137,6 +141,7 @@ class Order(models.Model):
         verbose_name_plural = "Заказы"
 
 
+# Модель позиции заказа
 class Orderitem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Заказ")
     product = models.ForeignKey(ProductInfo, on_delete=models.CASCADE, verbose_name="Продукт")
@@ -151,6 +156,7 @@ class Orderitem(models.Model):
         verbose_name_plural = "Позиции заказов"
 
 
+# Модель контакта
 class Contact(models.Model):
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name="Пользователь")
     value = models.JSONField(verbose_name="Контактные данные")

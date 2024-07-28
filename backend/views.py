@@ -22,20 +22,24 @@ from .utils import send_email
 
 @api_view(['POST'])
 def import_shop_data(request):
+    # Проверяем, есть ли файл в запросе
     if 'file' not in request.FILES:
         return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
     file: bytes = request.FILES['file']
 
     try:
+        # Загружаем данные YAML из файла
         data: dict = yaml.safe_load(file)
     except yaml.YAMLError as exc:
         return Response({"error": "Invalid YAML file"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Извлекаем название магазина, категории и данные о товарах из YAML файла
     shop_name: str = data.get('shop')
     categories_data: list = data.get('categories', [])
     goods_data: list = data.get('goods', [])
     with transaction.atomic():
+        # Получаем или создаем экземпляр магазина
         shop, _ = Shop.objects.get_or_create(name=shop_name)
 
         categories = {}
@@ -74,7 +78,7 @@ def import_shop_data(request):
                 }
             )
 
-            # Add product parameters
+            # Добавляем параметры продукта
             for key, value in good['parameters'].items():
                 parameter, _ = Parameter.objects.get_or_create(name=key)
                 ProductParameter.objects.get_or_create(
@@ -82,10 +86,10 @@ def import_shop_data(request):
                     parameter=parameter,
                     defaults={'value': value}
                 )
-
     return Response({"message": "Data imported successfully"}, status=status.HTTP_201_CREATED)
 
 
+# Представление списка продуктов с фильтрацией и поиском
 class ProductListView(generics.ListAPIView):
     queryset = ProductInfo.objects.all()
     serializer_class = ProductSerializer
@@ -94,6 +98,7 @@ class ProductListView(generics.ListAPIView):
     search_fields = ['name', 'product__name', 'shop__name']  # Поля для поиска
 
 
+# Представление для регистрации пользователя
 @api_view(['POST'])
 def registration(request):
     first_name = request.data.get('first_name')
@@ -101,27 +106,32 @@ def registration(request):
     email = request.data.get('email')
     password = request.data.get('password')
 
+    # Проверка на заполненность всех полей
     if not first_name or not last_name or not email or not password:
         return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Проверка на существование пользователя с таким email
     if CustomUser.objects.filter(email=email).exists():
         return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
-
+    # Создание нового пользователя
     user = CustomUser.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
+    # Создание токена для пользователя
     token, _ = Token.objects.get_or_create(user=user)
     return Response({"token": token.key}, status=status.HTTP_201_CREATED)
 
 
+# Представление для входа пользователя
 @api_view(['POST'])
 def login_view(request):
     email = request.data.get('email')
     password = request.data.get('password')
 
+    # Проверка на заполненность полей email и password
     if not email or not password:
         return Response({"error": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Аутентификация пользователя
     user = authenticate(request, username=email, password=password)
-
     if user is not None:
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key}, status=status.HTTP_200_OK)
@@ -129,6 +139,7 @@ def login_view(request):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# Представление для добавления контакта
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_contact_view(request):
@@ -140,6 +151,7 @@ def add_contact_view(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Представление для получения списка контактов
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_contacts_view(request):
@@ -149,6 +161,7 @@ def get_contacts_view(request):
     return Response(serializer.data)
 
 
+# Представление для удаления контакта
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_contact_view(request, contact_id):
@@ -157,6 +170,7 @@ def delete_contact_view(request, contact_id):
     return Response({"message": "Contact deleted successfully"}, status=status.HTTP_200_OK)
 
 
+# Представление для удаления товара из корзины
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_product_view(request, product_id):
@@ -174,26 +188,32 @@ def delete_product_view(request, product_id):
     return Response({"message": "Item deleted successfully"}, status=status.HTTP_200_OK)
 
 
+# Представление для отображения корзины
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def cart(request):
     user = request.user
     order = Order.objects.filter(user=user, status='CREATED').first()
 
+    # Сериализация элементов заказа с аннотированием полей
     serializer = OrderItemSerializer(
         data=list(order.items.all().annotate(name=F('productproductname'),
                                              price=F('product__price') * F('quantity')).values()),
         many=True)
+
+    # Проверка валидности данных сериализатора
     if serializer.is_valid():
         return Response(data=serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Представление для добавления товара в корзину
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_item_to_cart(request, product_id):
     user = request.user
+    # Проверка существования заказа со статусом 'CREATED'
     orders: QuerySet = Order.objects.filter(status='CREATED', user_id=user.id)
 
     if orders.exists():
@@ -204,6 +224,7 @@ def add_item_to_cart(request, product_id):
             user=user
         )
 
+    # Проверка существования элемента заказа с данным продуктом
     orders_item: QuerySet = Orderitem.objects.filter(order=order.id, product_id=product_id)
 
     if orders_item.exists():
@@ -223,6 +244,7 @@ def add_item_to_cart(request, product_id):
     return Response({"message": "Order add"}, status=status.HTTP_200_OK)
 
 
+# Представление для подтверждения заказа
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def accept_order_view(request, contact_id):
@@ -241,6 +263,7 @@ def accept_order_view(request, contact_id):
         return Response({"message": "Contact or Order not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Представление для отображения завершенных заказов
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def done_view(request):

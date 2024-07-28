@@ -22,21 +22,18 @@ from backend.views import import_shop_data, ProductListView, registration, login
     get_contacts_view, delete_contact_view, delete_product_view, add_item_to_cart, cart, accept_order_view, done_view
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('import-shop-data/', import_shop_data, name='import-shop-data'),
-    path('products/', ProductListView.as_view(), name='product-list'),
-    path('registration/', registration, name='product-list'),
-    path('login/', login_view, name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('add_contact/', add_contact_view, name='add_contact'),
-    path('contacts/', get_contacts_view, name='get_contacts'),
-    path('delete_contact/<int:contact_id>/', delete_contact_view, name='delete_contact'),
-    path('cart/delete_product/<int:product_id>/', delete_product_view, name='delete_product'),
-    path('cart/', cart, name='cart'),
-    path('add_product_to_cart/<int:product_id>/', add_item_to_cart, name='add_product_to_cart'),
-    path('cart/delete_product/<int:product_id>/', delete_product_view, name='delete_product'),
-
-    path('cart/<int:contact_id>/accept/', accept_order_view, name='accept_order_view'),
-
-    path('cart/done/', done_view, name='done_view')
+ path('admin/', admin.site.urls),  # Административная панель Django
+    path('import-shop-data/', import_shop_data, name='import-shop-data'),  # Импорт данных магазина
+    path('products/', ProductListView.as_view(), name='product-list'),  # Список продуктов
+    path('registration/', registration, name='product-list'),  # Регистрация пользователя
+    path('login/', login_view, name='login'),  # Вход пользователя
+    path('logout/', LogoutView.as_view(), name='logout'),  # Выход пользователя
+    path('add_contact/', add_contact_view, name='add_contact'),  # Добавление контакта
+    path('contacts/', get_contacts_view, name='get_contacts'),  # Получение списка контактов
+    path('delete_contact/<int:contact_id>/', delete_contact_view, name='delete_contact'),  # Удаление контакта
+    path('cart/delete_product/<int:product_id>/', delete_product_view, name='delete_product'),  # Удаление продукта из корзины
+    path('cart/', cart, name='cart'),  # Отображение корзины
+    path('add_product_to_cart/<int:product_id>/', add_item_to_cart, name='add_product_to_cart'),  # Добавление продукта в корзину
+    path('cart/<int:contact_id>/accept/', accept_order_view, name='accept_order_view'),  # Подтверждение заказа
+    path('cart/done/', done_view, name='done_view'),  # Отображение завершенных заказов
 ]
