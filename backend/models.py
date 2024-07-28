@@ -1,11 +1,7 @@
-import django
 from django.contrib.auth.models import User
-from django.db import models
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-
-from orders.settings import AUTH_USER_MODEL
 
 
 class CustomUserManager(BaseUserManager):
@@ -76,9 +72,14 @@ class ProductParameter(models.Model):
 
 
 class Order(models.Model):
+    STATUS_CHOICES = [
+        ('CREATED', 'CREATED'),
+        ('DONE', 'DONE'),
+    ]
+
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     dt = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=128)
+    status = models.CharField(choices=STATUS_CHOICES, default="CREATED", max_length=128)
 
 
 class Orderitem(models.Model):
