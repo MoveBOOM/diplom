@@ -50,3 +50,12 @@ class ContactSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone = serializers.CharField(max_length=128)
     address = AddressSerializer()
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=128, )
+    price = serializers.FloatField()
+
+    class Meta:
+        model = Orderitem
+        fields = ['name', 'price', 'quantity']

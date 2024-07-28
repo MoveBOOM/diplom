@@ -19,7 +19,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
 from backend.views import import_shop_data, ProductListView, registration, login_view, add_contact_view, \
-    get_contacts_view, delete_contact_view
+    get_contacts_view, delete_contact_view, delete_product_view, add_item_to_cart, cart
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +31,7 @@ urlpatterns = [
     path('add_contact/', add_contact_view, name='add_contact'),
     path('contacts/', get_contacts_view, name='get_contacts'),
     path('delete_contact/<int:contact_id>/', delete_contact_view, name='delete_contact'),
+    path('cart/delete_product/<int:product_id>/', delete_product_view, name='delete_product'),
+    path('cart/', cart, name='cart'),
+    path('add_product_to_cart/<int:product_id>/', add_item_to_cart, name='add_product_to_cart'),
 ]

@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
+from django.db.models import QuerySet, F
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,8 +14,9 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 import yaml
 from django.db import transaction
-from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser, Contact
-from .serializer import ProductSerializer, ContactSerializer
+from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser, Contact, Order, \
+    Orderitem
+from .serializer import ProductSerializer, ContactSerializer, OrderItemSerializer
 from .utils import send_email
 
 
@@ -153,3 +155,69 @@ def delete_contact_view(request, contact_id):
     contact = get_object_or_404(Contact, id=contact_id, user=request.user)
     contact.delete()
     return Response({"message": "Contact deleted successfully"}, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_product_view(request, product_id):
+    user = request.user
+    order = Order.objects.filter(user=user, status='CREATED').first()
+
+    order_item = get_object_or_404(Orderitem, order=order.id, product_id=product_id)
+
+    if order_item.quantity == 1:
+        order_item.delete()
+    else:
+        order_item.quantity -= 1
+        order_item.save(update_fields=['quantity'])
+
+    return Response({"message": "Item deleted successfully"}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cart(request):
+    user = request.user
+    order = Order.objects.filter(user=user, status='CREATED').first()
+
+    serializer = OrderItemSerializer(
+        data=list(order.items.all().annotate(name=F('productproductname'),
+                                             price=F('product__price') * F('quantity')).values()),
+        many=True)
+    if serializer.is_valid():
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_item_to_cart(request, product_id):
+    user = request.user
+    orders: QuerySet = Order.objects.filter(status='CREATED', user_id=user.id)
+
+    if orders.exists():
+        order = orders[0]
+
+    else:
+        order = Order.objects.create(
+            user=user
+        )
+
+    orders_item: QuerySet = Orderitem.objects.filter(order=order.id, product_id=product_id)
+
+    if orders_item.exists():
+        order_item: Orderitem = orders_item[0]
+        order_item.quantity += 1
+        order_item.save(update_fields=['quantity'])
+
+    else:
+        product = ProductInfo.objects.get(id=product_id)
+        order_item = Orderitem.objects.create(
+            order=order,
+            quantity=1,
+            product_id=product_id,
+            shop=product.shop
+        )
+
+    return Response({"message": "Order add"}, status=status.HTTP_200_OK)
