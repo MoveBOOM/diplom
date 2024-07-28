@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from backend.models import Product
+from backend.models import Product, Orderitem, Order
 #
 # наименование
 # описание
@@ -52,10 +52,30 @@ class ContactSerializer(serializers.Serializer):
     address = AddressSerializer()
 
 
+class OrderDoneItemSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='product.product.name', read_only=True)
+    price = serializers.SerializerMethodField()
+
+    def get_price(self, obj):
+        return obj.product.price * obj.quantity
+
+    class Meta:
+        model = Orderitem
+        fields = ['name', 'quantity', 'price']
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=128, )
+    name = serializers.CharField(max_length=128)
     price = serializers.FloatField()
 
     class Meta:
         model = Orderitem
         fields = ['name', 'price', 'quantity']
+
+
+class OrderDoneSerializer(serializers.ModelSerializer):
+    items = OrderDoneItemSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ['items', 'dt']

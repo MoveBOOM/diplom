@@ -16,7 +16,7 @@ import yaml
 from django.db import transaction
 from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser, Contact, Order, \
     Orderitem
-from .serializer import ProductSerializer, ContactSerializer, OrderItemSerializer
+from .serializer import ProductSerializer, ContactSerializer, OrderItemSerializer, OrderDoneSerializer
 from .utils import send_email
 
 
@@ -221,3 +221,31 @@ def add_item_to_cart(request, product_id):
         )
 
     return Response({"message": "Order add"}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def accept_order_view(request, contact_id):
+    user = request.user
+
+    order = user.order_set.filter(status='CREATED').first()
+    contact = Contact.objects.filter(id=contact_id, user=request.user).first()
+
+    if order and contact and order.items.exists():
+        order.contact = contact
+        order.status = 'DONE'
+        order.save(update_fields=['status', 'contact'])
+        send_email.delay("Заказ оформлен", "Ваш заказ успешно оформлен", user.email)
+        return Response({"message": "OK"}, status=status.HTTP_200_OK)
+    else:
+        return Response({"message": "Contact or Order not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def done_view(request):
+    user = request.user
+
+    orders = Order.objects.filter(status='DONE', user=user)
+    my_serializer = OrderDoneSerializer(orders, many=True)
+    return Response(my_serializer.data, status=status.HTTP_200_OK)
