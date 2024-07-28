@@ -33,7 +33,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductInfo
-        fields = ['name', 'description', 'shop', 'parameters', 'price', 'quantity']
+        fields = ['id', 'name', 'description', 'shop', 'parameters', 'price', 'quantity']
 
 
 # Сериализатор для адреса
@@ -48,12 +48,8 @@ class AddressSerializer(serializers.Serializer):
 
 # Сериализатор для контактной информации
 class ContactSerializer(serializers.Serializer):
-    last_name = serializers.CharField(max_length=128)
-    first_name = serializers.CharField(max_length=128)
-    middle_name = serializers.CharField(max_length=128)
-    email = serializers.EmailField(required=False)
-    phone = serializers.CharField(max_length=128)
-    address = AddressSerializer()
+    id = serializers.IntegerField(required=False)
+    value = serializers.JSONField()
 
 
 # Сериализатор для элемента завершенного заказа
@@ -71,12 +67,13 @@ class OrderDoneItemSerializer(serializers.ModelSerializer):
 
 # Сериализатор для элемента заказа
 class OrderItemSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='product.product.id')
     name = serializers.CharField(max_length=128)
     price = serializers.FloatField()
 
     class Meta:
         model = Orderitem
-        fields = ['name', 'price', 'quantity']
+        fields = ['id', 'name', 'price', 'quantity']
 
 
 # Сериализатор для завершенного заказа

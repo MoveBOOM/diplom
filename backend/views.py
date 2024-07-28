@@ -143,7 +143,7 @@ def login_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_contact_view(request):
-    serializer = ContactSerializer(data=request.data)
+    serializer = ContactSerializer(data={'value': request.data})
     if serializer.is_valid():
         Contact.objects.create(user=request.user, value=serializer.data)
         return Response({"message": "Contact added successfully"}, status=status.HTTP_201_CREATED)
@@ -156,8 +156,7 @@ def add_contact_view(request):
 @permission_classes([IsAuthenticated])
 def get_contacts_view(request):
     contacts = Contact.objects.filter(user=request.user).only('value')
-    all_contacts = [ct.value for ct in contacts]
-    serializer = ContactSerializer(all_contacts, many=True)
+    serializer = ContactSerializer(contacts, many=True)
     return Response(serializer.data)
 
 
@@ -194,16 +193,21 @@ def delete_product_view(request, product_id):
 def cart(request):
     user = request.user
     order = Order.objects.filter(user=user, status='CREATED').first()
+    if not order:
+        order = Order.objects.create(
+            user=user
+        )
 
     # Сериализация элементов заказа с аннотированием полей
     serializer = OrderItemSerializer(
-        data=list(order.items.all().annotate(name=F('productproductname'),
+        data=list(order.items.all().annotate(name=F('product__product__name'),
                                              price=F('product__price') * F('quantity')).values()),
         many=True)
 
     # Проверка валидности данных сериализатора
     if serializer.is_valid():
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        result = {"items": serializer.data, "order_id": order.id, "total_price": sum([item['price'] for item in serializer.data])}
+        return Response(data=result, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
