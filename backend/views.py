@@ -1,17 +1,20 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.authtoken.models import Token
 
 # Create your views here.
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics
 import yaml
 from django.db import transaction
-from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser
-from .serializer import ProductSerializer
+from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser, Contact
+from .serializer import ProductSerializer, ContactSerializer
 from .utils import send_email
 
 
@@ -102,9 +105,9 @@ def registration(request):
     if CustomUser.objects.filter(email=email).exists():
         return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-    CustomUser.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
-    send_email.delay('Registration successful', 'You have successfully registered', email)
-    return Response({"message": "Registration successful"}, status=status.HTTP_201_CREATED)
+    user = CustomUser.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
+    token, _ = Token.objects.get_or_create(user=user)
+    return Response({"token": token.key}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
@@ -118,7 +121,35 @@ def login_view(request):
     user = authenticate(request, username=email, password=password)
 
     if user is not None:
-        login(request, user)
-        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_contact_view(request):
+    serializer = ContactSerializer(data=request.data)
+    if serializer.is_valid():
+        Contact.objects.create(user=request.user, value=serializer.data)
+        return Response({"message": "Contact added successfully"}, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_contacts_view(request):
+    contacts = Contact.objects.filter(user=request.user).only('value')
+    all_contacts = [ct.value for ct in contacts]
+    serializer = ContactSerializer(all_contacts, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_contact_view(request, contact_id):
+    contact = get_object_or_404(Contact, id=contact_id, user=request.user)
+    contact.delete()
+    return Response({"message": "Contact deleted successfully"}, status=status.HTTP_200_OK)

@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
-from backend.views import import_shop_data, ProductListView, registration, login_view
+from backend.views import import_shop_data, ProductListView, registration, login_view, add_contact_view, \
+    get_contacts_view, delete_contact_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,4 +28,7 @@ urlpatterns = [
     path('registration/', registration, name='product-list'),
     path('login/', login_view, name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('add_contact/', add_contact_view, name='add_contact'),
+    path('contacts/', get_contacts_view, name='get_contacts'),
+    path('delete_contact/<int:contact_id>/', delete_contact_view, name='delete_contact'),
 ]

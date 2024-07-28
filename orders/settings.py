@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'backend'
 ]
@@ -126,6 +128,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
@@ -133,3 +138,9 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL: str = 'backend.CustomUser'
+CELERY_BROKER_URL = 'redis://redis:6379/0'  # Использование Redis как брокера задач
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'  # Использование Redis как backend для результатов задач
+CELERY_TASK_ALWAYS_EAGER = False  # Отключить синхронный режим, чтобы задачи выполнялись асинхронно
+
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'

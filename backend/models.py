@@ -90,6 +90,5 @@ class Orderitem(models.Model):
 
 
 class Contact(models.Model):
-    type = models.CharField(max_length=128)
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
-    value = models.CharField(max_length=128)
+    value = models.JSONField(max_length=128)

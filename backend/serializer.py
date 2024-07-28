@@ -32,3 +32,21 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductInfo
         fields = ['name', 'description', 'shop', 'parameters', 'price', 'quantity']
+
+
+class AddressSerializer(serializers.Serializer):
+    city = serializers.CharField(max_length=128, required=False)
+    street = serializers.CharField(max_length=128, required=False)
+    house = serializers.CharField(max_length=128, required=False)
+    flat = serializers.CharField(max_length=128, required=False)
+    build = serializers.CharField(max_length=128, required=False)
+    corps = serializers.CharField(max_length=128, required=False)
+
+
+class ContactSerializer(serializers.Serializer):
+    last_name = serializers.CharField(max_length=128)
+    first_name = serializers.CharField(max_length=128)
+    middle_name = serializers.CharField(max_length=128)
+    email = serializers.EmailField(required=False)
+    phone = serializers.CharField(max_length=128)
+    address = AddressSerializer()
