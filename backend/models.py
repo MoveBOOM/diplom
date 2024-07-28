@@ -1,7 +1,6 @@
-from django.contrib.auth.models import User
-
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+
 
 # Менеджер для кастомной модели пользователя
 class CustomUserManager(BaseUserManager):
@@ -14,12 +13,14 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
     # Метод для создания суперпользователя
     def create_superuser(self, email, first_name, last_name, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(email, first_name, last_name, password, **extra_fields)
+
 
 # Кастомная модель пользователя
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -41,6 +42,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
 
+
 # Модель магазина
 class Shop(models.Model):
     name = models.CharField(max_length=128, verbose_name="Название")
@@ -53,6 +55,7 @@ class Shop(models.Model):
         verbose_name = "Магазин"
         verbose_name_plural = "Магазины"
 
+
 # Модель категории
 class Category(models.Model):
     shops = models.ManyToManyField(Shop, related_name='categories', verbose_name="Магазины")
@@ -64,6 +67,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+
 
 # Модель продукта
 class Product(models.Model):
@@ -105,6 +109,7 @@ class Parameter(models.Model):
     class Meta:
         verbose_name = "Параметр"
         verbose_name_plural = "Параметры"
+
 
 # Модель параметров продукта
 class ProductParameter(models.Model):

@@ -1,17 +1,13 @@
 from rest_framework import serializers
 
-from backend.models import Product, Orderitem, Order
-#
+from backend.models import Orderitem, Order, ProductInfo, ProductParameter
+
 # наименование
 # описание
 # поставщик
 # характеристики
 # цена
 # количество
-
-
-from rest_framework import serializers
-from backend.models import Product, ProductInfo, ProductParameter, Shop
 
 
 # Сериализатор для параметров продукта

@@ -1,12 +1,9 @@
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
 from django.db.models import QuerySet, F
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.authtoken.models import Token
 
-# Create your views here.
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated

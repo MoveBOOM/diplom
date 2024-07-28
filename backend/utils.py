@@ -5,8 +5,6 @@ from email.mime.multipart import MIMEMultipart
 
 from celery import shared_task
 
-from orders.celery import app
-
 # Настройки SMTP сервера
 smtp_server = 'smtp.yandex.ru'  # Замените на ваш SMTP сервер
 smtp_port = 465  # Замените на ваш SMTP порт
