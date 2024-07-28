@@ -12,6 +12,7 @@ import yaml
 from django.db import transaction
 from .models import Shop, Category, Product, ProductInfo, Parameter, ProductParameter, CustomUser
 from .serializer import ProductSerializer
+from .utils import send_email
 
 
 @api_view(['POST'])
@@ -102,6 +103,7 @@ def registration(request):
         return Response({"error": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
     CustomUser.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
+    send_email.delay('Registration successful', 'You have successfully registered', email)
     return Response({"message": "Registration successful"}, status=status.HTTP_201_CREATED)
 
 
